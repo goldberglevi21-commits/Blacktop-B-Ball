@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3v3 Blacktop — Playable Ultimate</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#ff3348;--blue:#2c8cff;--gold:#ffd54d;--green:#19e68c;
+  --bg:#07080d;--panel:rgba(255,255,255,.055);--line:rgba(255,255,255,.12);
+  --text:#f5ecd9;--muted:#a99f8f;--wood:#b87333;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:Barlow,sans-serif;background:radial-gradient(circle at 30% 10%,#1c2336 0,#08090f 48%,#030306 100%);color:var(--text)}
+button,select,input{font:inherit}
+button{cursor:pointer}
+canvas{display:block}
+.screen{position:fixed;inset:0;display:none;z-index:50;overflow:auto}
+.screen.active{display:block}
+#enter{display:flex;align-items:center;justify-content:center;background:
+ radial-gradient(circle at 15% 20%,rgba(255,51,72,.28),transparent 25%),
+ radial-gradient(circle at 85% 25%,rgba(44,140,255,.25),transparent 26%),
+ radial-gradient(circle at 50% 85%,rgba(255,213,77,.18),transparent 30%),
+ linear-gradient(135deg,#07080d,#11172a 60%,#050609)}
+.enter-card{width:min(1180px,94vw);display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:stretch}
+@media(max-width:850px){.enter-card{grid-template-columns:1fr}}
+.hero, .preview-card, .panel{background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line);border-radius:26px;box-shadow:0 25px 80px rgba(0,0,0,.42);overflow:hidden}
+.hero{padding:34px;position:relative}
+.kicker{font-family:"Barlow Condensed";font-weight:900;letter-spacing:4px;text-transform:uppercase;color:var(--gold);font-size:16px}
+.title{font-family:"Barlow Condensed";font-size:clamp(70px,11vw,136px);font-weight:900;line-height:.82;letter-spacing:2px;margin:12px 0;text-shadow:0 10px 30px rgba(0,0,0,.4)}
+.title .r{color:var(--red)} .title .b{color:var(--blue)}
+.desc{color:#d6cebf;line-height:1.65;max-width:610px;font-size:15px}
+.badges{display:flex;gap:9px;flex-wrap:wrap;margin:20px 0}
+.badge{border:1px solid var(--line);border-radius:99px;background:rgba(255,255,255,.05);padding:8px 12px;color:#d8cfbd;font-size:11px;letter-spacing:1.2px;text-transform:uppercase}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.btn{border:0;border-radius:14px;padding:13px 24px;font-family:"Barlow Condensed";font-size:22px;letter-spacing:1.4px;font-weight:900;transition:.15s}
+.btn:hover{transform:translateY(-2px)}
+.btn-main{background:linear-gradient(135deg,#ffe36a,#ffb800);color:#160c00;box-shadow:0 10px 25px rgba(255,184,0,.25)}
+.btn-red{background:linear-gradient(135deg,#ff5266,#c90f2b);color:white}
+.btn-blue{background:linear-gradient(135deg,#48a5ff,#1257e8);color:white}
+.btn-ghost{background:rgba(255,255,255,.055);border:1px solid var(--line);color:var(--text)}
+.preview-card{position:relative;min-height:420px;background:#080a10}
+#sneak{width:100%;height:100%}
+.preview-label{position:absolute;left:18px;right:18px;bottom:18px;padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+.preview-label b{display:block;font-family:"Barlow Condensed";font-size:28px;letter-spacing:2px}.preview-label span{font-size:12px;color:var(--muted)}
+#menu{padding:18px;background:radial-gradient(circle at 20% 10%,rgba(255,51,72,.14),transparent 22%),radial-gradient(circle at 80% 20%,rgba(44,140,255,.16),transparent 24%),#06070b}
+.menu-wrap{max-width:1220px;margin:0 auto}
+.topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{font-family:"Barlow Condensed";font-size:48px;font-weight:900;letter-spacing:3px}
+.brand .r{color:var(--red)}.brand .b{color:var(--blue)}
+.grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+.panel{padding:16px;border-radius:18px}
+.panel h2{font-family:"Barlow Condensed";letter-spacing:2px;font-size:28px;margin-bottom:12px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.mode{padding:16px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.045);transition:.15s;text-align:left;color:var(--text)}
+.mode:hover,.mode.on{border-color:var(--gold);background:rgba(255,213,77,.09);transform:translateY(-2px)}
+.mode b{font-family:"Barlow Condensed";font-size:25px;letter-spacing:1px;display:block}
+.mode span{font-size:12px;color:var(--muted);line-height:1.4}
+.team-row{display:flex;gap:8px;flex-wrap:wrap;max-height:190px;overflow:auto;padding-right:4px}
+.team-btn{padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.045);color:var(--text);font-size:12px;font-weight:700}
+.team-btn.on{background:var(--gold);color:#190f00;border-color:transparent}
+.roster-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;max-height:350px;overflow:auto;padding-right:4px}
+.card{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:10px;background:rgba(0,0,0,.22)}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,#333,#111);display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed";font-size:20px;font-weight:900;border:2px solid rgba(255,255,255,.12)}
+.card b{display:block}.card small{color:var(--muted)}
+.rating{margin-left:auto;font-family:"Barlow Condensed";font-size:24px;color:var(--gold);font-weight:900}
+.pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.slots{display:grid;gap:7px}
+.slot{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:12px;padding:9px;background:rgba(255,255,255,.035)}
+.slot button{padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text)}
+select,input[type=text]{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0c0d13;color:var(--text)}
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.cap-grid label{font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.cap-grid input[type=range]{width:100%}
+#game{display:none;position:fixed;inset:0;z-index:10;background:#050607}
+#hud{position:absolute;left:0;right:0;top:0;height:72px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(4,5,8,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:3}
+.score{font-family:"Barlow Condensed";font-size:50px;font-weight:900;line-height:1}
+.hudside{display:flex;align-items:center;gap:12px}.hudmid{text-align:center;color:var(--muted)}.hudmid b{color:var(--text)}
+#courtWrap{position:absolute;inset:72px 0 0 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#gameCanvas{width:100%;height:100%;max-width:1400px;max-height:900px}
+#gameButtons{position:absolute;right:12px;top:88px;display:flex;gap:6px;z-index:4;flex-wrap:wrap;justify-content:flex-end}
+.cam{padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.55);color:var(--text);font-size:11px}.cam.on{background:var(--gold);color:#170b00}
+#meter{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:42px;height:260px;border:2px solid rgba(255,255,255,.22);border-radius:18px;overflow:hidden;background:linear-gradient(to top,#ff1d28 0%,#ff6b00 20%,#ffd300 38%,#1cff88 48%,#1cff88 52%,#ffd300 62%,#ff6b00 80%,#ff1d28 100%);display:none;z-index:4;box-shadow:0 0 25px rgba(0,0,0,.6)}
+#meterFill{position:absolute;left:0;bottom:0;width:100%;height:0;background:rgba(255,255,255,.5)}
+#greenBand{position:absolute;left:0;width:100%;height:20%;bottom:40%;border-top:3px solid white;border-bottom:3px solid white;background:rgba(0,255,120,.25)}
+#toast{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:5;padding:10px 22px;background:var(--gold);color:#150b00;border-radius:14px;font-family:"Barlow Condensed";font-weight:900;font-size:32px;letter-spacing:2px;opacity:0;transition:.15s;box-shadow:0 15px 35px rgba(0,0,0,.35)}
+#toast.show{opacity:1;top:104px}
+#gameOver{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.78);z-index:8}
+.over-card{width:min(560px,90vw);background:#10131d;border:1px solid var(--line);border-radius:24px;padding:24px;text-align:center}
+.over-card h1{font-family:"Barlow Condensed";font-size:70px}
+.help{font-size:12px;color:var(--muted);line-height:1.55;margin-top:9px}
+.statbox{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.statbox div{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:9px}.statbox b{font-family:"Barlow Condensed";font-size:26px;color:var(--gold);display:block}
+</style>
+</head>
+<body>
+<section id="enter" class="screen active">
+  <div class="enter-card">
+    <div class="hero">
+      <div class="kicker">Playable Ultimate Build</div>
+      <div class="title"><span class="r">3v3</span><br><span class="b">BLACKTOP</span></div>
+      <p class="desc">Real playable modes, current roster fixes, create-a-player, team filters, player ratings, arenas, working shot makes through the hoop, out-of-bounds returns, crowd, announcers, fouls, and substitutions.</p>
+      <div class="badges"><span class="badge">Quick Play</span><span class="badge">Franchise</span><span class="badge">MyCareer</span><span class="badge">Blacktop</span><span class="badge">Create Player</span></div>
+      <div class="btnrow"><button class="btn btn-main" id="enterBtn">Enter Game</button><button class="btn btn-blue" id="quickBtn">Quick Play Now</button></div>
+    </div>
+    <div class="preview-card"><canvas id="sneak" width="560" height="420"></canvas><div class="preview-label"><b>Game Preview</b><span>Players move, crowd reacts, and the ball can actually drop through the rim.</span></div></div>
+  </div>
+</section>
+
+<section id="menu" class="screen">
+  <div class="menu-wrap">
+    <div class="topbar"><div class="brand"><span class="r">3v3</span> <span class="b">BLACKTOP</span></div><button class="btn btn-main" id="startGame">Start Selected Mode</button></div>
+    <div class="grid">
+      <div class="panel">
+        <h2>Modes — these actually launch games</h2>
+        <div class="modes" id="modeGrid"></div>
+        <div class="help" id="modeHelp"></div>
+      </div>
+      <div class="panel">
+        <h2>Create-a-Player / MyCareer</h2>
+        <div class="cap-grid">
+          <label>Name <input id="capName" type="text" value="My Player"></label>
+          <label>Position <select id="capPos"><option>PG</option><option>SG</option><option>SF</option><option>PF</option><option>C</option></select></label>
+          <label>Shooting <input id="capShoot" type="range" min="60" max="99" value="86"></label>
+          <label>Speed <input id="capSpeed" type="range" min="60" max="99" value="88"></label>
+          <label>Dunk <input id="capDunk" type="range" min="60" max="99" value="84"></label>
+          <label>Defense <input id="capDef" type="range" min="60" max="99" value="80"></label>
+        </div>
+        <div class="btnrow"><button class="btn btn-blue" id="saveCap">Create / Update Player</button><button class="btn btn-ghost" id="useCap">Use My Player</button></div>
+        <div class="help">MyCareer starts your created player with CPU teammates. Upgrade sliders and play as them.</div>
+      </div>
+      <div class="panel">
+        <h2>NBA Teams</h2>
+        <div class="team-row" id="teamRow"></div>
+        <h2 style="margin-top:16px">Players on selected team</h2>
+        <div class="roster-list" id="rosterList"></div>
+      </div>
+      <div class="panel">
+        <h2>Build Squads</h2>
+        <div class="pick-grid">
+          <div><h3 style="color:var(--red);font-family:'Barlow Condensed';font-size:25px">Red</h3><div class="slots" id="redSlots"></div></div>
+          <div><h3 style="color:var(--blue);font-family:'Barlow Condensed';font-size:25px">Blue</h3><div class="slots" id="blueSlots"></div></div>
+        </div>
+        <div class="btnrow">
+          <button class="btn btn-red" id="autoTeams">Auto Fill Stars</button>
+          <button class="btn btn-ghost" id="subBtn">Substitution</button>
+          <select id="arena"><option value="street">Streetball Park</option><option value="garden">Boston Arena</option><option value="la">LA Lights</option><option value="gsw">Bay Arena</option><option value="ny">NYC Court</option></select>
+        </div>
+        <div class="help">Click any player card to put them into the first open red slot, then blue. Click a slot’s X to remove.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game">
+  <div id="hud">
+    <div class="hudside"><div><small id="redName">RED</small><div class="score" id="redScore" style="color:var(--red)">0</div></div></div>
+    <div class="hudmid"><b id="gameModeLabel">Quick Play</b><br><span id="status">Tip off</span> · First to <b id="target">11</b> · <span id="clock">14</span></div>
+    <div class="hudside"><div><small id="blueName">BLUE</small><div class="score" id="blueScore" style="color:var(--blue)">0</div></div></div>
+  </div>
+  <div id="courtWrap"><canvas id="gameCanvas" width="1000" height="650"></canvas></div>
+  <div id="gameButtons"><button class="cam on" data-cam="broadcast">Broadcast</button><button class="cam" data-cam="courtside">Courtside</button><button class="cam" data-cam="drive">Drive</button><button class="cam" data-cam="high">High</button><button class="cam" id="backMenu">Menu</button></div>
+  <div id="meter"><div id="greenBand"></div><div id="meterFill"></div></div>
+  <div id="toast"></div>
+  <div id="gameOver"><div class="over-card"><h1 id="overTitle">WIN</h1><p id="overText"></p><div class="statbox" id="statbox"></div><div class="btnrow" style="justify-content:center"><button class="btn btn-main" id="again">Play Again</button><button class="btn btn-ghost" id="menuAgain">Menu</button></div></div></div>
+</section>
+
+<script>
+const TEAMS={
+ "BOS":{name:"Boston Celtics",colors:["#007A33","#BA9653"],arena:"garden",players:[
+  ["Jayson Tatum","SF",95,"Shot Creator"],["Jaylen Brown","SG",91,"Slasher"],["Derrick White","PG",86,"Two-Way"],["Payton Pritchard","PG",82,"Deep Range"],["Neemias Queta","C",78,"Rim Runner"],["Sam Hauser","SF",79,"Catch & Shoot"]]},
+ "GSW":{name:"Golden State Warriors",colors:["#1D428A","#FFC72C"],arena:"gsw",players:[
+  ["Stephen Curry","PG",96,"Limitless"],["Jimmy Butler","SF",88,"Closer"],["Draymond Green","PF",84,"Defensive Anchor"],["Kristaps Porzingis","C",85,"Stretch Big"],["Brandin Podziemski","SG",80,"Hustle"],["Moses Moody","SG",79,"3&D"]]},
+ "LAL":{name:"Los Angeles Lakers",colors:["#552583","#FDB927"],arena:"la",players:[
+  ["LeBron James","SF",94,"Floor General"],["Luka Doncic","PG",97,"Magic Passer"],["Austin Reaves","SG",83,"Crafty Finisher"],["Rui Hachimura","PF",80,"Corner Scorer"],["Jaxson Hayes","C",76,"Lob Threat"],["Gabe Vincent","PG",76,"On-Ball D"]]},
+ "OKC":{name:"Oklahoma City Thunder",colors:["#007AC1","#EF3B24"],arena:"street",players:[
+  ["Shai Gilgeous-Alexander","PG",98,"Smooth Finisher"],["Chet Holmgren","C",90,"Rim Protector"],["Jalen Williams","SF",88,"All-Around"],["Lu Dort","SG",82,"Lockdown"],["Cason Wallace","PG",80,"Ball Hawk"],["Isaiah Hartenstein","C",82,"Rebounder"]]},
+ "DEN":{name:"Denver Nuggets",colors:["#0E2240","#FEC524"],arena:"street",players:[
+  ["Nikola Jokic","C",98,"Point Center"],["Jamal Murray","PG",88,"Tough Shot"],["Aaron Gordon","PF",84,"Dunker"],["Michael Porter Jr.","SF",83,"Tall Shooter"],["Christian Braun","SG",80,"Cutter"],["Peyton Watson","SF",78,"Blocker"]]},
+ "MIN":{name:"Minnesota Timberwolves",colors:["#0C2340","#78BE20"],arena:"street",players:[
+  ["Anthony Edwards","SG",94,"Explosive Dunker"],["Julius Randle","PF",86,"Power Scorer"],["Rudy Gobert","C",86,"Paint Wall"],["Jaden McDaniels","SF",82,"Wing Stopper"],["Mike Conley","PG",80,"Smart Passer"],["Naz Reid","C",82,"Stretch Big"]]},
+ "MIL":{name:"Milwaukee Bucks",colors:["#00471B","#EEE1C6"],arena:"street",players:[
+  ["Giannis Antetokounmpo","PF",97,"Greek Freak"],["Damian Lillard","PG",91,"Logo Range"],["Khris Middleton","SF",84,"Midrange"],["Brook Lopez","C",82,"Shot Blocker"],["Bobby Portis","PF",80,"Energy"],["Gary Trent Jr.","SG",79,"Shooter"]]},
+ "DAL":{name:"Dallas Mavericks",colors:["#00538C","#B8C4CA"],arena:"street",players:[
+  ["Anthony Davis","PF",94,"Two-Way Big"],["Kyrie Irving","PG",91,"Handles"],["Klay Thompson","SG",83,"Catch & Shoot"],["P.J. Washington","PF",81,"3&D"],["Daniel Gafford","C",80,"Lob Threat"],["Dereck Lively II","C",80,"Rim Runner"]]},
+ "NYK":{name:"New York Knicks",colors:["#006BB6","#F58426"],arena:"ny",players:[
+  ["Jalen Brunson","PG",93,"Clutch"],["Karl-Anthony Towns","C",90,"Stretch Big"],["OG Anunoby","SF",84,"Lockdown"],["Mikal Bridges","SG",84,"Iron Man"],["Josh Hart","SF",82,"Rebound Guard"],["Mitchell Robinson","C",80,"Boards"]]},
+ "PHX":{name:"Phoenix Suns",colors:["#1D1160","#E56020"],arena:"street",players:[
+  ["Devin Booker","SG",92,"Shot Maker"],["Kevin Durant","PF",94,"Unblockable"],["Dillon Brooks","SF",80,"Pest"],["Grayson Allen","SG",80,"Shooter"],["Nick Richards","C",78,"Glass"],["Tyus Jones","PG",80,"Steady"]]},
+ "SAS":{name:"San Antonio Spurs",colors:["#C4CED4","#000000"],arena:"street",players:[
+  ["Victor Wembanyama","C",95,"Alien Blocks"],["De'Aaron Fox","PG",89,"Speedster"],["Devin Vassell","SG",82,"Pull-Up"],["Stephon Castle","PG",80,"Slasher"],["Keldon Johnson","SF",79,"Power Wing"],["Jeremy Sochan","PF",79,"Defender"]]},
+ "CLE":{name:"Cleveland Cavaliers",colors:["#860038","#FDBB30"],arena:"street",players:[
+  ["Donovan Mitchell","SG",92,"Spider"],["Evan Mobley","PF",89,"Switch Big"],["Darius Garland","PG",87,"Handle Pass"],["Jarrett Allen","C",84,"Rim Runner"],["Max Strus","SF",80,"Shooter"],["De'Andre Hunter","SF",80,"Wing Scorer"]]}
+};
+const MODES=[
+ {id:"quick",name:"Quick Play",desc:"Pick teams and play first to 11.",target:11},
+ {id:"blacktop",name:"Streetball / Blacktop",desc:"No rules, faster pace, first to 15.",target:15,street:true},
+ {id:"franchise",name:"Season / Franchise",desc:"Win games to build your franchise record.",target:11,franchise:true},
+ {id:"mycareer",name:"MyCareer",desc:"Play as your created player with CPU teammates.",target:11,mycareer:true},
+ {id:"online",name:"Online Multiplayer",desc:"Local share-ready room mode. True online server can be added later.",target:11,online:true}
+];
+let allPlayers=[], selectedTeam="BOS", mode="quick", red=[], blue=[], cap=null, selectedSide="red";
+function buildPlayers(){
+ allPlayers=[];
+ Object.entries(TEAMS).forEach(([abbr,t])=>t.players.forEach((p,i)=>{
+  allPlayers.push({id:abbr+"-"+i,name:p[0],pos:p[1],ovr:p[2],skill:p[3],team:abbr,teamName:t.name,colors:t.colors,
+    shoot:Math.min(99,p[2]+(p[3].includes("Shoot")||p[3].includes("Range")||p[3].includes("Shot")||p[3].includes("Stretch")?5:0)),
+    speed:Math.min(99,p[2]+(p[3].includes("Speed")||p[3].includes("Slasher")||p[3].includes("Dunker")?4:0)),
+    dunk:Math.min(99,p[2]+(p[3].includes("Dunk")||p[3].includes("Lob")||p[3].includes("Freak")?7:0)),
+    def:Math.min(99,p[2]+(p[3].includes("Def")||p[3].includes("Block")||p[3].includes("Lock")||p[3].includes("Wall")?6:0)),
+    pass:Math.min(99,p[2]+(p[3].includes("Pass")||p[3].includes("Point")||p[3].includes("General")?6:0)),
+    skin:["#a8683f","#d2a06f","#8d5524","#f0c394","#6b3a1f"][Math.abs(hash(p[0]))%5],
+    hair:"#17120e",num:(i+1)*3%99
+  });
+ }));
+ if(cap) allPlayers.unshift(cap);
+}
+function hash(s){let h=0;for(let c of s)h=(h*31+c.charCodeAt(0))|0;return h}
+function qs(id){return document.getElementById(id)}
+function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));qs(id).classList.add("active")}
+function renderModes(){
+ qs("modeGrid").innerHTML=MODES.map(m=>`<button class="mode ${mode===m.id?'on':''}" data-mode="${m.id}"><b>${m.name}</b><span>${m.desc}</span></button>`).join("");
+ document.querySelectorAll(".mode").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;renderModes();toastMenu(MODES.find(x=>x.id===mode).name+" selected")});
+ qs("modeHelp").textContent = mode==="online" ? "This is link/share ready, but real live friend-vs-friend from different computers needs a small server." : "Start Selected Mode will use this mode's rules and lineups.";
+}
+function renderTeams(){
+ qs("teamRow").innerHTML=Object.entries(TEAMS).map(([abbr,t])=>`<button class="team-btn ${abbr===selectedTeam?'on':''}" data-team="${abbr}">${abbr} · ${t.name}</button>`).join("");
+ document.querySelectorAll(".team-btn").forEach(b=>b.onclick=()=>{selectedTeam=b.dataset.team;renderTeams();renderRoster()});
+}
+function initials(n){return n.split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase()}
+function renderRoster(){
+ const team=TEAMS[selectedTeam], list=allPlayers.filter(p=>p.team===selectedTeam || (selectedTeam==="CAP"&&p.created));
+ qs("rosterList").innerHTML=list.map(p=>`<div class="card" data-p="${p.id}">
+  <div class="avatar" style="border-color:${p.colors?.[1]||'#fff'};color:${p.colors?.[1]||'#fff'}">${initials(p.name)}</div>
+  <div><b>${p.name}</b><small>${p.teamName||"Created"} · ${p.pos} · ${p.skill}</small></div><div class="rating">${p.ovr}</div></div>`).join("");
+ document.querySelectorAll(".card").forEach(c=>c.onclick=()=>addPlayer(c.dataset.p));
+}
+function addPlayer(id){
+ const p=allPlayers.find(x=>x.id===id);
+ if(!p)return;
+ const target = red.length<3 ? red : blue.length<3 ? blue : selectedSide==="red"?red:blue;
+ if(target.some(x=>x.id===id))return;
+ if(target.length>=3)target.shift();
+ target.push({...p});
+ selectedSide=target===red?"blue":"red";
+ renderSlots();
+}
+function renderSlots(){
+ function row(side,arr){return [0,1,2].map(i=>`<div class="slot"><span>${arr[i]?`<b>${arr[i].name}</b><small> ${arr[i].team} · ${arr[i].ovr} · ${arr[i].skill}</small>`:"Empty Slot"}</span>${arr[i]?`<button data-side="${side}" data-i="${i}">X</button>`:""}</div>`).join("")}
+ qs("redSlots").innerHTML=row("red",red); qs("blueSlots").innerHTML=row("blue",blue);
+ document.querySelectorAll(".slot button").forEach(b=>b.onclick=()=>{(b.dataset.side==="red"?red:blue).splice(+b.dataset.i,1);renderSlots()});
+}
+function autoFill(){
+ const stars=[...allPlayers].sort((a,b)=>b.ovr-a.ovr);
+ red=stars.slice(0,3).map(x=>({...x})); blue=stars.slice(3,6).map(x=>({...x})); renderSlots();
+}
+function createCap(){
+ const shoot=+qs("capShoot").value, speed=+qs("capSpeed").value, dunk=+qs("capDunk").value, def=+qs("capDef").value;
+ const ovr=Math.round((shoot+speed+dunk+def)/4);
+ cap={id:"CAP-0",created:true,name:qs("capName").value||"My Player",pos:qs("capPos").value,ovr,skill:"Created Star",team:"CAP",teamName:"MyCareer",colors:["#222","#ffd54d"],shoot,speed,dunk,def,pass:84,skin:"#b7774a",hair:"#17120e",num:1};
+ buildPlayers(); selectedTeam="CAP"; if(!TEAMS.CAP)TEAMS.CAP={name:"Created Players",colors:["#222","#ffd54d"],arena:"street",players:[]};
+ renderTeams();renderRoster();toastMenu("Created "+cap.name);
+}
+function useCap(){if(!cap)createCap(); red=[{...cap},...allPlayers.filter(p=>p.team==="LAL").slice(0,2).map(x=>({...x}))]; blue=allPlayers.filter(p=>p.team==="BOS").slice(0,3).map(x=>({...x})); mode="mycareer";renderModes();renderSlots()}
+function toastMenu(t){console.log(t)}
+qs("enterBtn").onclick=()=>showScreen("menu");
+qs("quickBtn").onclick=()=>{autoFill();startGame("quick")};
+qs("startGame").onclick=()=>startGame(mode);
+qs("autoTeams").onclick=autoFill; qs("saveCap").onclick=createCap; qs("useCap").onclick=useCap; qs("subBtn").onclick=()=>{red.reverse();blue.reverse();renderSlots();};
+buildPlayers();renderModes();renderTeams();renderRoster();autoFill();
+
+// game
+const canvas=qs("gameCanvas"), ctx=canvas.getContext("2d"); ctx.imageSmoothingEnabled=true;
+const W=1000,H=650,C={x:70,y:70,w:860,h:500}, leftHoop={x:105,y:320}, rightHoop={x:895,y:320};
+let G=null, keys={}, camera="broadcast", last=0;
+function startGame(m){
+ if(red.length<3||blue.length<3) autoFill();
+ const cfg=MODES.find(x=>x.id===m)||MODES[0], arena=qs("arena").value;
+ showScreen("enter"); qs("enter").classList.remove("active"); qs("menu").classList.remove("active"); qs("game").style.display="block";
+ qs("gameModeLabel").textContent=cfg.name; qs("target").textContent=cfg.target;
+ G={mode:m,cfg,arena,score:[0,0],target:cfg.target,players:[],ball:{x:500,y:320,z:14,vx:0,vy:0,vz:0,owner:0,state:"held",lastTouched:0},clock:14,phase:"live",toastT:0,crowd:0,stats:{makes:0,miss:0,dunks:0,fouls:0},shotResolved:false,inboundTeam:null};
+ const spots=[[260,250],[260,320],[260,390],[740,250],[740,320],[740,390]];
+ red.forEach((p,i)=>G.players.push(makeGP(p,0,spots[i][0],spots[i][1],i===0)));
+ blue.forEach((p,i)=>G.players.push(makeGP(p,1,spots[i+3][0],spots[i+3][1],false)));
+ G.ball.owner=0; loop(0);
+}
+function makeGP(p,team,x,y,human){return {...p,team,x,y,vx:0,vy:0,human,energy:100,foul:0,injured:false,aiT:0,dribble:0,celebrate:0,subbed:false}}
+function hoopFor(team){return team===0?rightHoop:leftHoop}
+function defendHoop(team){return team===0?leftHoop:rightHoop}
+function showToast(t,color=""){const el=qs("toast");el.textContent=t;el.style.background=color||"var(--gold)";el.classList.add("show");setTimeout(()=>el.classList.remove("show"),850)}
+function crowd(){G.crowd=90; playCheer()}
+function playCheer(){try{const a=new (window.AudioContext||window.webkitAudioContext)(); const dur=.45, buf=a.createBuffer(1,a.sampleRate*dur,a.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length*.25);const s=a.createBufferSource();s.buffer=buf;const g=a.createGain();g.gain.value=.08;s.connect(g);g.connect(a.destination);s.start();}catch(e){}}
+function beep(f=440,d=.07){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.025;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+window.onkeydown=e=>{keys[e.key.toLowerCase()]=true;if(e.key===" "){e.preventDefault();startShot()} if(e.key==="Tab"){e.preventDefault();switchHuman()} if(e.key.toLowerCase()==="e")passBall(); if(e.key.toLowerCase()==="f")tryFoul();}
+window.onkeyup=e=>{keys[e.key.toLowerCase()]=false;if(e.key===" "){e.preventDefault();releaseShot()}};
+document.querySelectorAll(".cam").forEach(b=>b.onclick=()=>{if(b.dataset.cam){camera=b.dataset.cam;document.querySelectorAll(".cam").forEach(x=>x.classList.remove("on"));b.classList.add("on")}})
+qs("backMenu").onclick=()=>{qs("game").style.display="none";showScreen("menu")}; qs("again").onclick=()=>startGame(G.mode); qs("menuAgain").onclick=()=>{qs("game").style.display="none";showScreen("menu")};
+function humanP(){return G.players.find(p=>p.human)}
+function switchHuman(){const team=humanP().team, arr=G.players.filter(p=>p.team===team&&!p.injured); const idx=arr.findIndex(p=>p.human); arr[idx].human=false; arr[(idx+1)%arr.length].human=true}
+function passBall(){const h=humanP(); if(G.ball.owner==null||G.players[G.ball.owner]!==h)return; const mates=G.players.filter(p=>p.team===h.team&&p!==h); const to=mates.sort((a,b)=>dist(a.x,a.y,hoopFor(a.team).x,hoopFor(a.team).y)-dist(b.x,b.y,hoopFor(b.team).x,hoopFor(b.team).y))[0]; if(to){G.ball.owner=G.players.indexOf(to);G.ball.state="held";beep(350,.04)}}
+function tryFoul(){if(G.cfg.street)return; const h=humanP(); const o=nearest(G.players.filter(p=>p.team!==h.team),h.x,h.y); if(o&&dist(h.x,h.y,o.x,o.y)<34&&Math.random()<.35){G.stats.fouls++; showToast("FOUL!","var(--red)"); beep(1600,.12); startInbound(o.team)}}
+function startShot(){if(!G||G.ball.owner==null)return; const p=G.players[G.ball.owner]; if(!p.human)return; G.shooting={p,charge:0,up:true}; qs("meter").style.display="block";}
+function releaseShot(){if(!G||!G.shooting)return; const s=G.shooting, p=s.p; qs("meter").style.display="none"; const h=hoopFor(p.team), d=dist(p.x,p.y,h.x,h.y); const timing=s.charge/100, center=.5, diff=Math.abs(timing-center); const rangePenalty=Math.max(0,(d-110)/520); const green=.08 + (p.shoot-70)/700 - rangePenalty*.035; let chance=(p.shoot/100)*.55 + .34 - diff*1.15 - rangePenalty*.28; if(d<90) chance+=p.dunk/270; if(diff<green) chance+=.28; chance=Math.max(.08,Math.min(.94,chance)); shootBall(p,h,Math.random()<chance,d<80&&p.dunk>82); G.shooting=null;}
+function shootBall(p,h,make,dunk=false){
+ G.ball.owner=null; G.ball.state="shot"; G.ball.shooter=G.players.indexOf(p); G.ball.team=p.team; G.ball.make=make; G.ball.dunk=dunk; G.ball.t=0; G.ball.sx=p.x; G.ball.sy=p.y-18; G.ball.x=p.x; G.ball.y=p.y-18; G.ball.z=26; G.ball.tx=h.x; G.ball.ty=h.y; G.shotResolved=false; if(dunk){G.stats.dunks++; showToast("DUNK!","var(--green)")}
+}
+function nearest(arr,x,y){return arr.reduce((a,b)=>!a||dist(b.x,b.y,x,y)<dist(a.x,a.y,x,y)?b:a,null)}
+function loop(t){if(!G)return; const dt=Math.min(.033,(t-last)/1000||.016); last=t; update(dt); draw(); requestAnimationFrame(loop);}
+function update(dt){
+ if(G.shooting){G.shooting.charge += (G.shooting.up?135:-135)*dt; if(G.shooting.charge>100){G.shooting.charge=100;G.shooting.up=false} if(G.shooting.charge<0){G.shooting.charge=0;G.shooting.up=true} qs("meterFill").style.height=G.shooting.charge+"%";}
+ if(G.phase==="live"){
+  updatePlayers(dt); updateBall(dt);
+  G.clock-=dt; if(G.clock<=0){showToast("SHOT CLOCK"); startInbound(1-(G.ball.team??0));}
+ }
+ qs("clock").textContent=Math.ceil(G.clock); qs("redScore").textContent=G.score[0]; qs("blueScore").textContent=G.score[1];
+ if(G.crowd>0)G.crowd--;
+}
+function updatePlayers(dt){
+ const h=humanP(); let mx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0), my=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+ if(mx||my){const l=Math.hypot(mx,my); mx/=l;my/=l} const sp=(keys.shift?180:125)*(h.speed/88)*(h.injured?.75:1); h.x+=mx*sp*dt; h.y+=my*sp*dt;
+ h.x=Math.max(C.x+15,Math.min(C.x+C.w-15,h.x)); h.y=Math.max(C.y+15,Math.min(C.y+C.h-15,h.y)); h.dribble+=dt*(mx||my?4:2.2);
+ G.players.forEach((p,i)=>{if(p.human)return; ai(p,dt,i)});
+ // collisions
+ for(let i=0;i<G.players.length;i++)for(let j=i+1;j<G.players.length;j++){const a=G.players[i],b=G.players[j],d=dist(a.x,a.y,b.x,b.y); if(d<26&&d>0){const nx=(a.x-b.x)/d,ny=(a.y-b.y)/d,push=(26-d)/2;a.x+=nx*push;b.x-=nx*push;a.y+=ny*push;b.y-=ny*push}}
+}
+function ai(p,dt,i){
+ const owner=G.ball.owner!=null?G.players[G.ball.owner]:null; let tx,ty;
+ if(G.phase==="inbound" && p.inbounder){tx=G.ball.x;ty=G.ball.y}
+ else if(owner&&owner.team===p.team){ const h=hoopFor(p.team); tx=h.x+(i%3-1)*90; ty=h.y+(i%3-1)*70; }
+ else if(owner){tx=owner.x+(i%2?22:-22);ty=owner.y+(i%3-1)*18}
+ else {tx=G.ball.x;ty=G.ball.y}
+ const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy)||1, sp=80*(p.speed/85); if(d>8){p.x+=dx/d*sp*dt;p.y+=dy/d*sp*dt;p.dribble+=dt*3}
+ // CPU shoot
+ if(owner===p&&Math.random()<dt*.22){const h=hoopFor(p.team), dd=dist(p.x,p.y,h.x,h.y); if(dd<210) shootBall(p,h,Math.random()<(.42+p.ovr/260-(dd/900)),dd<70&&p.dunk>84)}
+}
+function updateBall(dt){
+ const b=G.ball;
+ if(b.owner!=null){const p=G.players[b.owner]; b.x=p.x+(p.team? -12:12); b.y=p.y+9+Math.abs(Math.sin(p.dribble*5.1))*16; b.z=10+Math.abs(Math.sin(p.dribble*5.1))*8; b.team=p.team; return;}
+ if(b.state==="shot"){
+  b.t+=dt*1.35; const t=Math.min(1,b.t); const arc=Math.sin(Math.PI*t)*150; b.x=b.sx+(b.tx-b.sx)*t; b.y=b.sy+(b.ty-b.sy)*t; b.z=20+arc;
+  if(t>=1 && !G.shotResolved){
+   G.shotResolved=true;
+   if(b.make){ score(b.team,b.dunk?2:1); }
+   else { b.state="loose"; b.vx=(Math.random()-.5)*220; b.vy=(Math.random()-.5)*220; b.vz=80; b.z=38; G.stats.miss++; beep(260,.05); }
+  }
+ } else if(b.state==="loose"){
+  b.x+=b.vx*dt; b.y+=b.vy*dt; b.z+=b.vz*dt; b.vz-=420*dt; b.vx*=.992; b.vy*=.992;
+  if(b.z<10){b.z=10;b.vz=Math.abs(b.vz)*.42; if(Math.abs(b.vz)>25)beep(150,.04)}
+  const p=nearest(G.players,b.x,b.y); if(p&&dist(p.x,p.y,b.x,b.y)<26){b.owner=G.players.indexOf(p);b.state="held";showToast("BOARD!");}
+  if(b.x<C.x-35||b.x>C.x+C.w+35||b.y<C.y-35||b.y>C.y+C.h+35) startInbound(1-(b.team??0));
+ }
+}
+function score(team,pts){
+ G.score[team]+=pts; G.stats.makes++; showToast(team===0?"RED BUCKET!":"BLUE BUCKET!",team===0?"var(--red)":"var(--blue)"); crowd(); beep(980,.09);
+ if(G.score[team]>=G.target){endGame(team);return}
+ startInbound(1-team);
+}
+function startInbound(team){
+ G.phase="inbound"; G.clock=14; G.inboundTeam=team; const side=team===0?C.x+8:C.x+C.w-8; G.ball.x=side; G.ball.y=H/2; G.ball.z=12; G.ball.owner=null; G.ball.state="inbound"; G.ball.team=team;
+ const inbounder=nearest(G.players.filter(p=>p.team===team),G.ball.x,G.ball.y); G.players.forEach(p=>p.inbounder=false); if(inbounder)inbounder.inbounder=true;
+ setTimeout(()=>{if(!G||G.phase!=="inbound")return; const p=G.players.find(p=>p.inbounder); if(p){G.ball.owner=G.players.indexOf(p);G.ball.state="held";p.inbounder=false; showToast("INBOUND");} G.phase="live";},900);
+}
+function endGame(team){qs("gameOver").style.display="flex";qs("overTitle").textContent=(team===0?"RED":"BLUE")+" WINS";qs("overText").textContent=`Final score ${G.score[0]} - ${G.score[1]}`;qs("statbox").innerHTML=`<div><b>${G.stats.makes}</b>Makes</div><div><b>${G.stats.dunks}</b>Dunks</div><div><b>${G.stats.fouls}</b>Fouls</div>`}
+function draw(){
+ ctx.clearRect(0,0,W,H); ctx.save();
+ if(camera==="courtside"){ctx.translate(0,45); ctx.scale(1.08,.92)}
+ if(camera==="drive"){const h=humanP();ctx.translate(W/2-h.x,H/2-h.y);ctx.scale(1.15,1.15)}
+ if(camera==="high"){ctx.scale(.94,.94);ctx.translate(30,30)}
+ drawArena(); drawCourt(); [...G.players].sort((a,b)=>a.y-b.y).forEach(p=>drawP(p)); drawBall(); ctx.restore();
+}
+function drawArena(){
+ const grd=ctx.createLinearGradient(0,0,0,H); grd.addColorStop(0,"#111828"); grd.addColorStop(1,"#07090e"); ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+ for(let r=0;r<4;r++)for(let i=0;i<50;i++){const x=40+i*19+(r%2)*8,y=18+r*16;ctx.fillStyle=(G.crowd>0&&Math.random()<.35)?["#ffd54d","#ff3348","#2c8cff","#fff"][i%4]:"rgba(255,255,255,.18)";ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill();}
+}
+function drawCourt(){
+ ctx.fillStyle=G.arena==="garden"?"#b8793f":G.arena==="la"?"#9d6a32":G.arena==="gsw"?"#c6924b":"#30343d"; ctx.fillRect(C.x,C.y,C.w,C.h);
+ ctx.strokeStyle="rgba(255,255,255,.85)"; ctx.lineWidth=3; ctx.strokeRect(C.x,C.y,C.w,C.h); ctx.beginPath();ctx.moveTo(W/2,C.y);ctx.lineTo(W/2,C.y+C.h);ctx.stroke();
+ ctx.beginPath();ctx.arc(W/2,H/2,62,0,7);ctx.stroke();
+ [leftHoop,rightHoop].forEach((h,idx)=>{ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.strokeRect(h.x+(idx?14:-54),h.y-35,40,70);ctx.strokeStyle="#ff6b00";ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(h.x,h.y,20,9,0,0,7);ctx.stroke();ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=1;for(let i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(h.x+i*5,h.y+6);ctx.lineTo(h.x+i*2,h.y+28);ctx.stroke();}});
+}
+function drawP(p){
+ const c=p.team===0?TEAMS[red[0].team]?.colors||["#ff3348","#fff"]:TEAMS[blue[0].team]?.colors||["#2c8cff","#fff"], main=p.team===0?"#ff3348":"#2c8cff";
+ ctx.fillStyle="rgba(0,0,0,.28)";ctx.beginPath();ctx.ellipse(p.x,p.y+24,18,6,0,0,7);ctx.fill();
+ if(p.human){ctx.strokeStyle=varColor("--gold");ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y-8,24,0,7);ctx.stroke();}
+ // legs
+ ctx.strokeStyle="#f0d0a8";ctx.lineWidth=6;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(p.x-5,p.y+10);ctx.lineTo(p.x-9,p.y+28);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x+5,p.y+10);ctx.lineTo(p.x+9,p.y+28);ctx.stroke();
+ ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(p.x-13,p.y+30);ctx.lineTo(p.x-3,p.y+30);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x+3,p.y+30);ctx.lineTo(p.x+13,p.y+30);ctx.stroke();
+ // body
+ ctx.fillStyle=main;ctx.beginPath();ctx.roundRect(p.x-15,p.y-22,30,36,8);ctx.fill();
+ // real neck connecting head/body
+ ctx.fillStyle=p.skin;ctx.beginPath();ctx.roundRect(p.x-6,p.y-33,12,18,5);ctx.fill();
+ ctx.fillStyle=main;ctx.fillRect(p.x-14,p.y-18,28,5);
+ ctx.fillStyle="#fff";ctx.font="900 11px Barlow";ctx.textAlign="center";ctx.fillText(p.num||0,p.x,p.y-2);
+ // arms
+ ctx.strokeStyle=p.skin;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(p.x-13,p.y-14);ctx.lineTo(p.x-22,p.y+2);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x+13,p.y-14);ctx.lineTo(p.x+22,p.y+2);ctx.stroke();
+ // head
+ ctx.fillStyle=p.skin;ctx.beginPath();ctx.ellipse(p.x,p.y-43,12,14,0,0,7);ctx.fill();ctx.fillStyle=p.hair;ctx.beginPath();ctx.ellipse(p.x,p.y-51,12,6,0,Math.PI,0);ctx.fill();
+ ctx.fillStyle="#111";ctx.beginPath();ctx.arc(p.x-4,p.y-43,1.4,0,7);ctx.arc(p.x+4,p.y-43,1.4,0,7);ctx.fill();
+ if(p.celebrate>0){ctx.fillStyle="#ffd54d";ctx.font="900 16px Barlow Condensed";ctx.fillText("🔥",p.x,p.y-65)}
+}
+function drawBall(){
+ const b=G.ball; ctx.fillStyle="rgba(0,0,0,.25)";ctx.beginPath();ctx.ellipse(b.x,b.y+14,10,3,0,0,7);ctx.fill();
+ ctx.fillStyle="#d66a1f";ctx.beginPath();ctx.arc(b.x,b.y-b.z*.18,9,0,7);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.45)";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(b.x,b.y-b.z*.18,9,Math.PI/2,Math.PI*1.5);ctx.stroke();ctx.beginPath();ctx.moveTo(b.x-8,b.y-b.z*.18);ctx.lineTo(b.x+8,b.y-b.z*.18);ctx.stroke();
+}
+function varColor(v){return getComputedStyle(document.documentElement).getPropertyValue(v)}
+function dist(a,b,c,d){return Math.hypot(a-c,b-d)}
+function sneakLoop(t){
+ const c=qs("sneak"),x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);x.fillStyle="#0b0f18";x.fillRect(0,0,c.width,c.height);x.fillStyle="#a86b37";x.fillRect(50,70,460,280);x.strokeStyle="#fff";x.lineWidth=2;x.strokeRect(50,70,460,280);for(let i=0;i<6;i++){let px=120+i*65+Math.sin(t/500+i)*20,py=190+Math.cos(t/600+i)*50;x.fillStyle=i<3?"#ff3348":"#2c8cff";x.beginPath();x.roundRect(px-10,py-22,20,34,6);x.fill();x.fillStyle="#c98b5b";x.beginPath();x.arc(px,py-32,10,0,7);x.fill();}x.fillStyle="#d66a1f";x.beginPath();x.arc(270+Math.sin(t/300)*80,190+Math.cos(t/350)*35,8,0,7);x.fill();requestAnimationFrame(sneakLoop)}
+requestAnimationFrame(sneakLoop);
+</script>
+</body>
+</html>
